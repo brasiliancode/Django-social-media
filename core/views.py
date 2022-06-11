@@ -2,14 +2,19 @@ from socket import INADDR_UNSPEC_GROUP
 from django.shortcuts import redirect, render
 from django.contrib.auth.models import User, auth
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
 from .models import Profile
 
-
-
+@login_required(login_url='signin')
 def index(request):
     return render(request,'index.html')
+
+@login_required(login_url='signin')
+def setting(request):
+    return render(request, 'setting.html')
+
 
 def signup(request):
     if request.method == 'POST':
@@ -50,5 +55,25 @@ def signup(request):
 
 
 def segnin(request):
-    return render(request, 'signin.html')
+
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+
+        user = auth.authenticate(username=username, password=password)
+
+        if user is not None:
+            auth.login(request, user)
+            return redirect('/')
+        else:
+            messages.info(request, 'Credentials Invalid')
+            return redirect('signin')
+
+    else:
+        return render(request, 'signin.html')
+    
+@login_required(login_url='signin')
+def logout(request):
+    auth.logout(request)
+    return redirect('signin')
 
